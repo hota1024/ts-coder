@@ -34,7 +34,7 @@
     "rollup": "^2.21.0",
     "rollup-plugin-sourcemaps": "^0.6.2",
     "rollup-plugin-typescript2": "^0.27.1",
-    "ts-jest": "^26.1.2",
+    "ts-jest": "^26.4.4",
     "ttypescript": "^1.5.10",
     "typescript": "^3.9.6"
   },
