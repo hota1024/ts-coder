@@ -2,7 +2,12 @@
   "compilerOptions": {
     "moduleResolution": "node",
     "target": "esnext",
+    "module": "commonjs",
     "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "declarationDir": "types"
   },
   "include": [
     "src"
