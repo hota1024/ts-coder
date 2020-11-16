@@ -1,5 +1,5 @@
-import { Encoder } from '@/Encoder'
-import { chunkBuffer } from '@/helpers'
+import { Encoder } from '../Encoder'
+import { chunkBuffer } from '../helpers'
 import { DecoderOnDataCallback, IDecoder } from './IDecoder'
 
 /**
