@@ -1,6 +1,6 @@
 {
   "name": "ts-coder",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Core programs for Reversi game.",
   "main": "dist/index.js",
   "types": "types",
