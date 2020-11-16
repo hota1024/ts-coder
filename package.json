@@ -38,7 +38,9 @@
     "ttypescript": "^1.5.10",
     "typescript": "^3.9.6"
   },
-  "dependencies": {},
+  "dependencies": {
+    "bit-buffer": "^0.2.4"
+  },
   "jest": {
     "moduleFileExtensions": [
       "ts",
