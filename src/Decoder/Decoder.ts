@@ -20,6 +20,28 @@ export type DecoderOptions = {
 }
 
 /**
+ * DecoderPushResult type.
+ */
+export type DeocderPushResult =
+  | {
+      /**
+       * whether decoded.
+       */
+      decoded: true
+
+      /**
+       * decoded data.
+       */
+      data: Buffer
+    }
+  | {
+      /**
+       * whether decoded.
+       */
+      decoded: false
+    }
+
+/**
  * Decoder class.
  */
 export class Decoder implements IDecoder {
@@ -36,7 +58,7 @@ export class Decoder implements IDecoder {
     this.isEnd = options.isEnd
   }
 
-  push(buffer: Buffer): void {
+  push(buffer: Buffer): DeocderPushResult {
     const packets = chunkBuffer(buffer, Encoder.packetSize)
 
     for (const packet of packets) {
@@ -46,9 +68,19 @@ export class Decoder implements IDecoder {
       this.buffers.push(shard)
 
       if (this.isEnd(head)) {
+        const data = Buffer.from([...this.buffers])
         this.onDataCallbacks.forEach((fn) => fn(Buffer.concat(this.buffers)))
         this.buffers = []
+
+        return {
+          decoded: true,
+          data,
+        }
       }
+    }
+
+    return {
+      decoded: false,
     }
   }
 
