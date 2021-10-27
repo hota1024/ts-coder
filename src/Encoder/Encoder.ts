@@ -1,5 +1,3 @@
-import { BitStream, BitView } from 'bit-buffer'
-import { chunk, chunkBuffer, indexed } from '../helpers'
 import { IEncoder } from './IEncoder'
 
 /**
@@ -90,15 +88,24 @@ export class Encoder implements IEncoder {
   }
 
   encode(buffer: Buffer): Buffer[] {
-    const rawBuffers = this.chunkRawBuffer(buffer)
-    const buffers = this.setHeads(rawBuffers).map((buffer, i) =>
-      this.createPacket(buffer, i)
-    )
-    const tsPackets = chunk(buffers, Encoder.tsMaxPackets)
-
-    const tsList = tsPackets.map((packets) => {
-      return Buffer.concat(packets)
-    })
+    const length = buffer.length
+    let position = 0
+    let packetList =[]
+    let tsList=[]
+    let counter = 0
+    while(position < length) {
+      const packet = this.createPacket(buffer.slice(position,position + Encoder.payloadSize),counter)
+      packetList.push(packet)
+      if(counter != 0 && (counter + 1) % (Encoder.tsMaxPackets) == 0){
+        tsList.push(Buffer.concat(packetList))
+        packetList = []
+      }
+      counter++
+      position += Encoder.payloadSize
+    }
+    if(packetList.length > 0){
+      tsList.push(Buffer.concat(packetList))
+    }
 
     return tsList
   }
@@ -110,56 +117,15 @@ export class Encoder implements IEncoder {
    * @param counter counter.
    */
   private createPacket(buffer: Buffer, counter: number) {
-    counter %= this.maxContinutyCounter
+    let header = Buffer.from([0x47,0x40,0x30,0x10])
+    let packetBuffer = []
+    header[3] += counter & 0x0f
+    packetBuffer.push(header)
+    packetBuffer.push(buffer)
+    const fill = Buffer.alloc(Encoder.payloadSize - buffer.length)
+    fill.fill(0xff)
+    packetBuffer.push(fill)
 
-    const view = new BitView(Buffer.alloc(Encoder.packetSize, 0xff))
-    const stream = new BitStream(view)
-
-    ;((stream as unknown) as { bigEndian: boolean }).bigEndian = true
-
-    view.setBits(0, this.syncByte, 8)
-
-    view.setBits(8, 0b0, 1) // TEI
-    view.setBits(9, 0b1, 1) // PUSI
-    view.setBits(10, 0b0, 1) // transport priority
-    view.setBits(11, this.pid, 13) // PID
-
-    view.setBits(24, 0b00, 2) // TSC
-    view.setBits(26, 0b00, 0b01) // adaptation field control(0b01 = pyaload)
-    view.setBits(28, counter, 4) // continuity counter
-
-    buffer.forEach((byte, index) => {
-      view.setBits(4 * 8 + index * 8, byte, 8)
-    })
-
-    return view.buffer
-  }
-
-  /**
-   * set heads to each buffer.
-   *
-   * @param buffers buffers.
-   */
-  private setHeads(buffers: Buffer[]) {
-    const result: Buffer[] = []
-
-    for (const [i, buffer] of indexed(buffers)) {
-      const mapped = this.preMap(buffer, i, buffers)
-      result.push(mapped)
-    }
-
-    return result
-  }
-
-  /**
-   * chunk given buffer.
-   *
-   * @param buffer buffer.
-   */
-  private chunkRawBuffer(buffer: Buffer) {
-    const chunkSize = Encoder.payloadSize - this.headSize
-    const chunked = chunkBuffer(buffer, chunkSize)
-
-    return chunked
+    return Buffer.concat(packetBuffer)
   }
 }
