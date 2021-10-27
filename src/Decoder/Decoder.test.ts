@@ -1,4 +1,4 @@
-import { Encoder } from '@/Encoder'
+import { Encoder } from '.././Encoder'
 import { Decoder } from './Decoder'
 
 describe('Decoder class test', () => {
