@@ -1,4 +1,5 @@
 import { IEncoder } from './IEncoder'
+import { chunkBuffer } from '../helpers'
 
 /**
  * EncoderOptions type.
@@ -93,15 +94,16 @@ export class Encoder implements IEncoder {
     let packetList =[]
     let tsList=[]
     let counter = 0
+    const rawBuffers = this.chunkRawBuffer(buffer)
     while(position < length) {
-      const packet = this.createPacket(buffer.slice(position,position + Encoder.payloadSize),counter)
+      const packet = this.createPacket(this.preMap(buffer.slice(position,position + Encoder.payloadSize - this.headSize), counter, rawBuffers),counter)
       packetList.push(packet)
       if(counter != 0 && (counter + 1) % (Encoder.tsMaxPackets) == 0){
         tsList.push(Buffer.concat(packetList))
         packetList = []
       }
       counter++
-      position += Encoder.payloadSize
+      position += Encoder.payloadSize - this.headSize
     }
     if(packetList.length > 0){
       tsList.push(Buffer.concat(packetList))
@@ -127,5 +129,17 @@ export class Encoder implements IEncoder {
     packetBuffer.push(fill)
 
     return Buffer.concat(packetBuffer)
+  }
+  
+  /**
+   * chunk given buffer.
+   *
+   * @param buffer buffer.
+   */
+  private chunkRawBuffer(buffer: Buffer) {
+    const chunkSize = Encoder.payloadSize - this.headSize
+    const chunked = chunkBuffer(buffer, chunkSize)
+
+    return chunked
   }
 }
